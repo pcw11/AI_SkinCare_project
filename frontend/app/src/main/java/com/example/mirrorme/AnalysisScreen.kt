@@ -40,12 +40,19 @@ import java.io.FileOutputStream
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 
-val MM_Font = FontFamily(
-    Font(R.font.A2Z_4Regular, FontWeight.Normal),
-    Font(R.font.A2Z_7Bold, FontWeight.Bold),
-    Font(R.font.A2Z_3Light, FontWeight.Light),
-    Font(R.font.A2Z_5Medium, FontWeight.Medium)
-)
+val MM_Font: FontFamily by lazy {
+    FontFamily(
+        Font(R.font.a2z_1thin, FontWeight.Thin),
+        Font(R.font.a2z_2extralight, FontWeight.ExtraLight),
+        Font(R.font.a2z_3light, FontWeight.Light),
+        Font(R.font.a2z_4regular, FontWeight.Normal),
+        Font(R.font.a2z_5medium, FontWeight.Medium),
+        Font(R.font.a2z_6semibold, FontWeight.SemiBold),
+        Font(R.font.a2z_7bold, FontWeight.Bold),
+        Font(R.font.a2z_8extrabold, FontWeight.ExtraBold),
+        Font(R.font.a2z_9black, FontWeight.Black)
+    )
+}
 
 
 // 디자인 가이드 컬러 정의
@@ -60,6 +67,82 @@ fun AnalysisScreen(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     var isLoading by remember { mutableStateOf(false) }
+    var showGuidance by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    if (showGuidance) {
+        ModalBottomSheet(
+            onDismissRequest = { showGuidance = false },
+            sheetState = sheetState,
+            containerColor = Color.Black,
+            dragHandle = { BottomSheetDefaults.DragHandle(color = Color.White.copy(alpha = 0.3f)) }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(start = 24.dp, end = 24.dp, bottom = 48.dp)
+            ) {
+                Text(
+                    text = "좋은 예",
+                    color = Color.White,
+                    fontFamily = MM_Font,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    GuidanceImage(modifier = Modifier.weight(1f), resId = R.drawable.good_ex1)
+                    GuidanceImage(modifier = Modifier.weight(1f), resId = R.drawable.good_ex2)
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = "잘못된 예",
+                    color = Color.White,
+                    fontFamily = MM_Font,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    GuidanceImage(modifier = Modifier.weight(1f), resId = R.drawable.bad_ex1)
+                    GuidanceImage(modifier = Modifier.weight(1f), resId = R.drawable.bad_ex2)
+                }
+
+                Spacer(modifier = Modifier.height(48.dp))
+
+                Button(
+                    onClick = {
+                        showGuidance = false
+                        performUpload(context, { isLoading = it }, onNavigateToResult)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(75.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White,
+                        contentColor = Color.Black
+                    ),
+                    shape = RoundedCornerShape(28.dp)
+                ) {
+                    Text(
+                        text = "확인",
+                        fontFamily = MM_Font,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -120,7 +203,7 @@ fun AnalysisScreen(
                     .clip(RoundedCornerShape(16.dp))
                     .background(LightGray)
                     .clickable(enabled = !isLoading) {
-                        performUpload(context, { isLoading = it }, onNavigateToResult)
+                        showGuidance = true
                     },
                 contentAlignment = Alignment.Center
             ) {
@@ -207,6 +290,28 @@ fun AnalysisScreen(
             }
             
             Spacer(modifier = Modifier.height(40.dp))
+        }
+    }
+}
+
+@Composable
+fun GuidanceImage(modifier: Modifier = Modifier, resId: Int?) {
+    Box(
+        modifier = modifier
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color.DarkGray),
+        contentAlignment = Alignment.Center
+    ) {
+        if (resId != null) {
+            Image(
+                painter = painterResource(id = resId),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Text("이미지", color = Color.Gray, fontSize = 12.sp)
         }
     }
 }
