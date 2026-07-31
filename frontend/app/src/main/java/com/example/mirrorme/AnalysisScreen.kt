@@ -41,17 +41,22 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 
 val MM_Font: FontFamily by lazy {
-    FontFamily(
-        Font(R.font.a2z_1thin, FontWeight.Thin),
-        Font(R.font.a2z_2extralight, FontWeight.ExtraLight),
-        Font(R.font.a2z_3light, FontWeight.Light),
-        Font(R.font.a2z_4regular, FontWeight.Normal),
-        Font(R.font.a2z_5medium, FontWeight.Medium),
-        Font(R.font.a2z_6semibold, FontWeight.SemiBold),
-        Font(R.font.a2z_7bold, FontWeight.Bold),
-        Font(R.font.a2z_8extrabold, FontWeight.ExtraBold),
-        Font(R.font.a2z_9black, FontWeight.Black)
-    )
+    try {
+        FontFamily(
+            Font(R.font.a2z_1thin, FontWeight.Thin),
+            Font(R.font.a2z_2extralight, FontWeight.ExtraLight),
+            Font(R.font.a2z_3light, FontWeight.Light),
+            Font(R.font.a2z_4regular, FontWeight.Normal),
+            Font(R.font.a2z_5medium, FontWeight.Medium),
+            Font(R.font.a2z_6semibold, FontWeight.SemiBold),
+            Font(R.font.a2z_7bold, FontWeight.Bold),
+            Font(R.font.a2z_8extrabold, FontWeight.ExtraBold),
+            Font(R.font.a2z_9black, FontWeight.Black)
+        )
+    } catch (e: Throwable) {
+        // Fallback to default font family if resources are temporarily unavailable (common in Previews)
+        FontFamily.Default
+    }
 }
 
 
