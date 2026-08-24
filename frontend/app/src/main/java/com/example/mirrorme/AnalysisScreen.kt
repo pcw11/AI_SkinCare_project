@@ -67,13 +67,24 @@ private val LightGray = Color(0xFFF5F5F5)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalysisScreen(
-    onNavigateToResult: (SkinAnalysisResponse) -> Unit = {}
+    onNavigateToResult: (SkinAnalysisResponse) -> Unit = {},
+    onNavigateToHistory: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     var isLoading by remember { mutableStateOf(false) }
     var showGuidance by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    // 히스토리 데이터 정의
+    val historyItems = remember {
+        listOf(
+            "2024-04-27",
+            "2024-04-11",
+            "2024-03-15",
+            "2024-02-28"
+        )
+    }
 
     if (showGuidance) {
         ModalBottomSheet(
@@ -259,13 +270,12 @@ fun AnalysisScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // 가로 스크롤 히스토리 리스트
-            val historyItems = listOf("4월 27일", "4월 11일", "3월 15일")
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(bottom = 8.dp)
             ) {
-                items(historyItems) { date ->
-                    HistoryCard(date)
+                items(historyItems) { dateString ->
+                    HistoryCard(date = dateString, onClick = onNavigateToHistory)
                 }
             }
 
@@ -322,32 +332,45 @@ fun GuidanceImage(modifier: Modifier = Modifier, resId: Int?) {
 }
 
 @Composable
-fun HistoryCard(date: String) {
+fun HistoryCard(date: String, onClick: (String) -> Unit) {
+    // 날짜 포맷팅: "2024-04-27" -> "04.27" & "2024"
+    val parts = date.split("-")
+    val year = parts.getOrNull(0) ?: ""
+    val monthDay = if (parts.size >= 3) "${parts[1]}.${parts[2]}" else ""
+
     Box(
         modifier = Modifier
             .size(150.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(16.dp))
             .background(DeepGreen)
+            .clickable { onClick(date) }
             .padding(20.dp),
         contentAlignment = Alignment.BottomStart
     ) {
-        val parts = date.split(" ")
         Column {
             Text(
-                text = parts.getOrNull(0) ?: "",
-                color = Color.White,
+                text = year,
+                color = Color.White.copy(alpha = 0.7f),
                 fontFamily = MM_Font,
-                fontSize = 25.sp,
-                fontWeight = FontWeight.SemiBold,
-                lineHeight = 36.sp
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium
             )
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = parts.getOrNull(1) ?: "",
+                text = monthDay,
                 color = Color.White,
                 fontFamily = MM_Font,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.ExtraBold,
-                lineHeight = 36.sp
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                lineHeight = 34.sp
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "자세히 보기 >",
+                color = Color.White.copy(alpha = 0.9f),
+                fontFamily = MM_Font,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Light
             )
         }
     }
