@@ -503,7 +503,59 @@ def login():
 
     return jsonify({"success": True, "user_id": user["user_id"], "nickname": user['nickname']}), 200
 
-# ── 13. 엔트리포인트 ─────────────────────────────────────
+# ── 13. 프로필 수정 API (백엔드/DB) ─────────────────────────────────────
+@app.route('/users/<user_id>/profile', methods=['PUT'])
+def update_profile(user_id):
+    data = request.get_json()
+
+    conn = sqlite3.connect(DB_PATH)
+    existing = conn.execute("SELECT user_id FROM users WHERE user_id = ?", (user_id,)).fetchone()
+    if existing is None:
+        conn.close()
+        return jsonify({"success": False, "message": "존재하지 않는 사용자"}), 404
+
+    conn.execute("""
+        UPDATE users
+        SET gender = ?,
+            birth_year = ?,
+            skin_type = ?,
+            skin_concern = ?,
+            allergy_ingredients = ?,
+            preferred_formulations = ?
+        WHERE user_id = ?
+    """, (
+        data.get("gender"),
+        data.get("birth_year"),
+        data.get("skin_type"),
+        json.dumps(data.get("skin_concern", [])),
+        json.dumps(data.get("allergy_ingredients", [])),
+        json.dumps(data.get("preferred_formulations", [])),
+        user_id
+    ))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"success": True, "user_id": user_id}), 200
+
+
+@app.route('/users/<user_id>/profile', methods=['GET'])
+def get_profile(user_id):
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    user = conn.execute("SELECT * FROM users WHERE user_id = ?", (user_id,)).fetchone()
+    conn.close()
+
+    if user is None:
+        return jsonify({"success": False, "message": "존재하지 않는 사용자"}), 404
+
+    profile = dict(user)
+    profile.pop("password_hash", None)  # 비밀번호 해시는 응답에 절대 포함하지 않음
+    for field in ["skin_concern", "allergy_ingredients", "preferred_formulations"]:
+        profile[field] = json.loads(profile[field]) if profile[field] else []
+
+    return jsonify({"success": True, "profile": profile}), 200
+
+# ── 14. 엔트리포인트 ─────────────────────────────────────
 if __name__ == "__main__":
 
     # ── pigmentation / pore / sebum: 다중 샘플 검증 ──────
