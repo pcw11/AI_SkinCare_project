@@ -407,44 +407,38 @@ def analyze_skin_api():
     scores = {k: normalize(k, v) for k, v in raw.items()}
     total_score = max(0, 100 - round(sum(scores.values()) / len(scores)))
 
-    return jsonify({
-        "success": True,
-        "total_score": total_score,
-        "scores": scores,
-        "raw_values": {
-            "acne_count":         raw["acne"],
-            "pigmentation_count": raw["pigmentation"],
-            "pore_variance":      round(raw["pore"], 4),
-            "sebum_ratio":        round(raw["sebum"] * 100, 1)
-        }
-    }), 200
+    raw_values = {
+        "acne_count":         raw["acne"],
+        "pigmentation_count": raw["pigmentation"],
+        "pore_variance":      round(raw["pore"], 4),
+        "sebum_ratio":        round(raw["sebum"] * 100, 1)
+    }
 
-# ── 11. 히스토리 저장/조회 API (백엔드/DB) ────────────────
-@app.route('/save-result', methods=['POST'])
-def save_result():
-    data = request.get_json()
-
-    user_id = data.get("user_id") or str(uuid.uuid4())
-    scores = data.get("scores", {})
-    total_score = data.get("total_score")
-    raw_values = data.get("raw_values", {})
-
+    # 백엔드/DB - 분석 결과 즉시 DB에 저장
+    user_id = request.form.get("user_id") or str(uuid.uuid4())
     conn = sqlite3.connect(DB_PATH)
     conn.execute("""
         INSERT INTO skin_analyses
         (user_id, score_total, score_acne, score_pore, score_pigmentation, score_sebum, raw_values)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (
-        user_id, total_score,
-        scores.get("acne"), scores.get("pore"),
-        scores.get("pigmentation"), scores.get("sebum"),
-        json.dumps(raw_values)
-    ))
+        """, (
+            user_id, total_score,
+            scores.get("acne"), scores.get("pore"),
+            scores.get("pigmentation"), scores.get("sebum"),
+            json.dumps(raw_values)
+        ))
     conn.commit()
     conn.close()
 
-    return jsonify({"success": True, "user_id": user_id}), 200
+    return jsonify({
+        "success": True,
+        "user_id": user_id,
+        "total_score": total_score,
+        "scores": scores,
+        "raw_values": raw_values
+    }), 200
 
+# ── 11. 히스토리 저장/조회 API (백엔드/DB) ────────────────
 @app.route('/history/<user_id>', methods=['GET'])
 def get_history(user_id):
     conn = sqlite3.connect(DB_PATH)
