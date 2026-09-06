@@ -8,6 +8,7 @@ import os
 import glob
 from flask import Flask, request, jsonify
 from matplotlib import rc
+from werkzeug.security import generate_password_hash, check_password_hash
 import matplotlib.font_manager as fm
 plt.rcParams['font.family'] = 'Malgun Gothic'
 plt.rcParams['axes.unicode_minus'] = False
@@ -458,7 +459,51 @@ def get_history(user_id):
 
     return jsonify({"success": True, "user_id": user_id, "history": history}), 200
 
-# ── 12. 엔트리포인트 ─────────────────────────────────────
+# ── 12. 회원가입 / 로그인 API (백엔드/DB) ─────────────────
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.get_json()
+    email = data.get("email")
+    password = data.get("password")
+    nickname = data.get("nickname", "")
+
+    if not email or not password:
+        return jsonify({"success": False, "message": "이메일/비밀번호 필요"}), 400
+
+    conn = sqlite3.connect(DB_PATH)
+    existing = conn.execute("SELECT user_id FROM users WHERE email = ?", (email,)).fetchone()
+    if existing:
+        conn.close()
+        return jsonify({"success": False, "message": "이미 가입된 이메일,"}), 409
+
+    user_id = str(uuid.uuid4())
+    password_hash = generate_password_hash(password)
+    conn.execute("""
+        INSERT INTO users (user_id, email, password_hash, nickname)
+        VALUES (?, ?, ?, ?)
+    """, (user_id, email, password_hash, nickname))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"success": True, "user_id": user_id}), 201
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    email = data.get("email")
+    password = data.get("password")
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+    conn.close()
+
+    if user is None or not check_password_hash(user["password_hash"], password):
+        return jsonify({"success": False, "message": "이메일 또는 비밀번호가 틀렸습니다."}), 401
+
+    return jsonify({"success": True, "user_id": user["user_id"], "nickname": user['nickname']}), 200
+
+# ── 13. 엔트리포인트 ─────────────────────────────────────
 if __name__ == "__main__":
 
     # ── pigmentation / pore / sebum: 다중 샘플 검증 ──────
