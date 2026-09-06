@@ -41,9 +41,9 @@ fun LoginScreen(
 
         // 로고 (Logo)
         Image(
-            painter = painterResource(id = R.drawable.logo),
+            painter = painterResource(id = R.drawable.mirrorme_logo_header),
             contentDescription = "MirrorMe Logo",
-            modifier = Modifier.height(60.dp),
+            modifier = Modifier.height(50.dp),
             contentScale = ContentScale.Fit
         )
 

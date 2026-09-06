@@ -174,9 +174,9 @@ fun AnalysisScreen(
                 },
                 title = {
                     Image(
-                        painter = painterResource(id = R.drawable.logo), // 업로드한 이미지 리소스 ID
-                        contentDescription = "MirrorMe Logo",
-                        modifier = Modifier.height(48.dp), // 기존 텍스트 크기와 비슷하게 높이 조절
+                        painter = painterResource(id = R.drawable.mirrorme_logo_header_small), // 업로드한 이미지 리소스 ID
+                        modifier = Modifier.height(40.dp),
+                        contentDescription = "MirrorMe Logo", // 기존 텍스트 크기와 비슷하게 높이 조절
                         contentScale = ContentScale.Fit
                     )
                 },
