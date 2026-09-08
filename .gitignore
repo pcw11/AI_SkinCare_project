@@ -222,3 +222,6 @@ __marimo__/
 .cxx
 local.properties
 
+# backend
+backend/*.db
+backend/test_selfie.jpg
