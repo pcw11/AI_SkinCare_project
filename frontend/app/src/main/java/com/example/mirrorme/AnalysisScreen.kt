@@ -1,5 +1,6 @@
 package com.example.mirrorme
 
+import com.example.mirrorme.R
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -39,22 +40,22 @@ import java.io.File
 import java.io.FileOutputStream
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import com.example.mirrorme.ui.theme.MirrorMeTheme
 
 val MM_Font: FontFamily by lazy {
     try {
         FontFamily(
-            Font(R.font.a2z_1thin, FontWeight.Thin),
-            Font(R.font.a2z_2extralight, FontWeight.ExtraLight),
-            Font(R.font.a2z_3light, FontWeight.Light),
-            Font(R.font.a2z_4regular, FontWeight.Normal),
-            Font(R.font.a2z_5medium, FontWeight.Medium),
-            Font(R.font.a2z_6semibold, FontWeight.SemiBold),
-            Font(R.font.a2z_7bold, FontWeight.Bold),
-            Font(R.font.a2z_8extrabold, FontWeight.ExtraBold),
-            Font(R.font.a2z_9black, FontWeight.Black)
+            Font(R.font.a2z_thin, FontWeight.Thin),
+            Font(R.font.a2z_extralight, FontWeight.ExtraLight),
+            Font(R.font.a2z_light, FontWeight.Light),
+            Font(R.font.a2z_regular, FontWeight.Normal),
+            Font(R.font.a2z_medium, FontWeight.Medium),
+            Font(R.font.a2z_semibold, FontWeight.SemiBold),
+            Font(R.font.a2z_bold, FontWeight.Bold),
+            Font(R.font.a2z_extrabold, FontWeight.ExtraBold),
+            Font(R.font.a2z_black, FontWeight.Black)
         )
     } catch (e: Throwable) {
-        // Fallback to default font family if resources are temporarily unavailable (common in Previews)
         FontFamily.Default
     }
 }
@@ -429,5 +430,7 @@ fun prepareImageFile(context: Context): File {
 @Preview(showBackground = true)
 @Composable
 fun AnalysisScreenPreview() {
-    AnalysisScreen()
+    MirrorMeTheme {
+        AnalysisScreen()
+    }
 }
