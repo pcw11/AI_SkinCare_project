@@ -43,20 +43,25 @@ import androidx.compose.ui.text.font.FontFamily
 import com.example.mirrorme.ui.theme.MirrorMeTheme
 
 val MM_Font: FontFamily by lazy {
-    try {
-        FontFamily(
-            Font(R.font.a2z_thin, FontWeight.Thin),
-            Font(R.font.a2z_extralight, FontWeight.ExtraLight),
-            Font(R.font.a2z_light, FontWeight.Light),
-            Font(R.font.a2z_regular, FontWeight.Normal),
-            Font(R.font.a2z_medium, FontWeight.Medium),
-            Font(R.font.a2z_semibold, FontWeight.SemiBold),
-            Font(R.font.a2z_bold, FontWeight.Bold),
-            Font(R.font.a2z_extrabold, FontWeight.ExtraBold),
-            Font(R.font.a2z_black, FontWeight.Black)
-        )
-    } catch (e: Throwable) {
+    if (android.os.Build.FINGERPRINT == "unknown" || 
+        runCatching { Class.forName("com.android.layoutlib.bridge.Bridge") }.isSuccess) {
         FontFamily.Default
+    } else {
+        try {
+            FontFamily(
+                Font(R.font.a2z_thin, FontWeight.Thin),
+                Font(R.font.a2z_extralight, FontWeight.ExtraLight),
+                Font(R.font.a2z_light, FontWeight.Light),
+                Font(R.font.a2z_regular, FontWeight.Normal),
+                Font(R.font.a2z_medium, FontWeight.Medium),
+                Font(R.font.a2z_semibold, FontWeight.SemiBold),
+                Font(R.font.a2z_bold, FontWeight.Bold),
+                Font(R.font.a2z_extrabold, FontWeight.ExtraBold),
+                Font(R.font.a2z_black, FontWeight.Black)
+            )
+        } catch (e: Throwable) {
+            FontFamily.Default
+        }
     }
 }
 
@@ -75,7 +80,7 @@ fun AnalysisScreen(
     val scrollState = rememberScrollState()
     var isLoading by remember { mutableStateOf(false) }
     var showGuidance by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
     // 히스토리 데이터 정의
     val historyItems = remember {
@@ -88,6 +93,7 @@ fun AnalysisScreen(
     }
 
     if (showGuidance) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
             onDismissRequest = { showGuidance = false },
             sheetState = sheetState,
@@ -161,18 +167,43 @@ fun AnalysisScreen(
         }
     }
 
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = {
+                Text(
+                    text = "로그아웃",
+                    fontFamily = MM_Font,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = "로그아웃하시겠습니까?",
+                    fontFamily = MM_Font
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showLogoutDialog = false
+                    // 실제 로그아웃 로직 처리
+                }) {
+                    Text("취소", color = DeepGreen, fontFamily = MM_Font, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("확인", color = Color.Gray, fontFamily = MM_Font)
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                navigationIcon = {
-                    IconButton(onClick = { /* 메뉴 로직 */ }) {
-                        Icon(
-                            imageVector = Icons.Default.Menu,
-                            contentDescription = "Menu",
-                            tint = Color.Black
-                        )
-                    }
-                },
                 title = {
                     Image(
                         painter = painterResource(id = R.drawable.mirrorme_logo_header_small), // 업로드한 이미지 리소스 ID
@@ -182,7 +213,7 @@ fun AnalysisScreen(
                     )
                 },
                 actions = {
-                    IconButton(onClick = { /* 로그아웃 로직 */ }) {
+                    IconButton(onClick = { showLogoutDialog = true }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                             contentDescription = "Exit",
@@ -250,7 +281,10 @@ fun AnalysisScreen(
 
             // 2. 지난 처방전 섹션
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onNavigateToHistory(historyItems.first()) }
+                    .padding(vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
