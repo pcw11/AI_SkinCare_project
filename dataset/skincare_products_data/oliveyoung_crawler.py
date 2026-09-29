@@ -12,8 +12,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 # 저장 경로 및 카운트 초기화
 desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-EXCEL_FILE = os.path.join(desktop_path, "skincare_ product_rawdata")
-
+EXCEL_FILE = os.path.join(desktop_path, "skincare_product_rawdata.xlsx")
 if os.path.exists(EXCEL_FILE):
     try:
         prev_df = pd.read_excel(EXCEL_FILE)
@@ -175,10 +174,9 @@ def capture_current_page():
     global captured_count
     current_url = driver.current_url
 
-    if "goodsNo=" not in current_url:
+    if "getGoodsDetail" not in current_url and "goodsNo=" not in current_url.lower():
         show_toast("안내", "상품 상세 페이지 진입 필요", 1500)
         return
-
     print("\n[추출 시작]")
 
     # 고시정보 아코디언 오픈
