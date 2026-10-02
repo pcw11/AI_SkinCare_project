@@ -399,8 +399,8 @@ fun ReportScreenPreview() {
         ReportScreen(
             response = SkinAnalysisResponse(
                 success = true,
-                totalScore = 69,
-                scores = SkinDetails(acne = 70, pigmentation = 65, pore = 60, sebum = 45)
+                totalScore = 78,
+                scores = SkinDetails(acne = 75, pigmentation = 60, pore = 70, sebum = 55)
             )
         )
     }

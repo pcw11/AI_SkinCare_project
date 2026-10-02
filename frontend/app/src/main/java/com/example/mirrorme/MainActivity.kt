@@ -7,13 +7,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.mirrorme.ui.theme.MirrorMeTheme
+
+sealed interface Screen {
+    object Analysis : Screen
+    data class Report(val response: SkinAnalysisResponse) : Screen
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,28 +23,44 @@ class MainActivity : ComponentActivity() {
         setContent {
             MirrorMeTheme {
                 Surface(
-                    modifier = androidx.compose.ui.Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AnalysisScreen()
+                    var currentScreen by remember { mutableStateOf<Screen>(Screen.Analysis) }
+
+                    when (val screen = currentScreen) {
+                        is Screen.Analysis -> {
+                            AnalysisScreen(
+                                onNavigateToResult = { response ->
+                                    currentScreen = Screen.Report(response)
+                                },
+                                onNavigateToHistory = { date ->
+                                    // 해당 날짜에 맞는 더미 데이터 생성하여 ReportScreen으로 이동
+                                    val dummyResponse = SkinAnalysisResponse(
+                                        success = true,
+                                        totalScore = when(date) {
+                                            "2024-04-27" -> 78
+                                            "2024-04-11" -> 72
+                                            "2024-03-15" -> 65
+                                            else -> 60
+                                        },
+                                        scores = SkinDetails(acne = 75, pigmentation = 60, pore = 70, sebum = 55)
+                                    )
+                                    currentScreen = Screen.Report(dummyResponse)
+                                }
+                            )
+                        }
+                        is Screen.Report -> {
+                            ReportScreen(
+                                response = screen.response,
+                                onBackClick = {
+                                    currentScreen = Screen.Analysis
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    MirrorMeTheme {
-        Greeting("Android")
     }
 }
