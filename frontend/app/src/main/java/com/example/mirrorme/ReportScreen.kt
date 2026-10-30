@@ -75,21 +75,21 @@ fun ReportScreen(
             )
 
             // 2. AI 어드바이스 섹션
-            AdviceSection()
+            AdviceSection(response.llmReport)
 
             Spacer(modifier = Modifier.height(24.dp))
             HorizontalDivider(thickness = 8.dp, color = Color(0xFFF5F5F5))
 
-            // 3. 추천 제품 섹션
-            ProductSection()
+            // 3. 추천 제품 섹션 (항목)
+            ProductSection(response.recommendations)
 
             Spacer(modifier = Modifier.height(24.dp))
             HorizontalDivider(thickness = 8.dp, color = Color(0xFFF5F5F5))
 
-            // 4. 추이 차트 섹션 (상세 분석 항목 추이)
+            // 4. 피부 변화 추이 (꺾은선 그래프)
             ChartSection()
 
-            Spacer(modifier = Modifier.height(300.dp))
+            Spacer(modifier = Modifier.height(30.dp))
         }
     }
 }
@@ -97,10 +97,18 @@ fun ReportScreen(
 @Composable
 fun SummarySection(response: SkinAnalysisResponse) {
     Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)) {
-        SummaryRow("종합 점수", "${response.totalScore}.9")
-        SummaryRow("가장 개선된 항목", "없음")
-        SummaryRow("주의 항목", "홍조")
-        SummaryRow("연간 분석 횟수", "2회")
+        SummaryRow("종합 점수", "${response.totalScore}점")
+        
+        // 주의 항목 계산 (점수가 높은 것이 안좋은 것 - backend logic: scores = normalize(k, v), total_score = 100 - avg(scores))
+        val worstCategory = listOf(
+            "여드름" to response.scores.acne,
+            "색소침착" to response.scores.pigmentation,
+            "모공" to response.scores.pore,
+            "피지" to response.scores.sebum
+        ).maxByOrNull { it.second }?.first ?: "없음"
+
+        SummaryRow("주의 항목", worstCategory)
+        SummaryRow("분석 결과", if (response.totalScore >= 80) "우수" else if (response.totalScore >= 60) "보통" else "주의 필요")
     }
 }
 
@@ -131,7 +139,7 @@ fun SummaryRow(label: String, value: String) {
 }
 
 @Composable
-fun AdviceSection() {
+fun AdviceSection(summary: String?) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -155,7 +163,7 @@ fun AdviceSection() {
                 .padding(20.dp)
         ) {
             Text(
-                text = "홍조 점수가 높으니, 피부 온도를 낮춰주는 쿨링 성분이 포함된 진정 팩이나 병풀 추출물, 판테놀이 함유된 저자극 수분 크림을 사용하여 충분히 진정시켜 주세요!",
+                text = summary ?: "분석 결과를 바탕으로 AI 리포트를 생성 중입니다...",
                 fontFamily = MM_Font,
                 fontSize = 15.sp,
                 lineHeight = 24.sp,
@@ -166,7 +174,45 @@ fun AdviceSection() {
 }
 
 @Composable
-fun ProductSection() {
+fun DetailScoresSection(scores: SkinDetails) {
+    Column(modifier = Modifier.padding(20.dp)) {
+        Text(
+            text = "분석 상세 점수 (낮을수록 좋음)",
+            fontFamily = MM_Font,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+        
+        ScoreProgressBar("여드름", scores.acne, Color(0xFF9575CD))
+        ScoreProgressBar("색소침착", scores.pigmentation, Color(0xFFFFB74D))
+        ScoreProgressBar("모공", scores.pore, Color(0xFF4FC3F7))
+        ScoreProgressBar("피지", scores.sebum, Color(0xFFFF8A80))
+    }
+}
+
+@Composable
+fun ScoreProgressBar(label: String, score: Int, color: Color) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = label, fontFamily = MM_Font, fontSize = 14.sp)
+            Text(text = "$score/100", fontFamily = MM_Font, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        LinearProgressIndicator(
+            progress = { score / 100f },
+            modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+            color = color,
+            trackColor = Color(0xFFEEEEEE),
+        )
+    }
+}
+
+@Composable
+fun ProductSection(recommendations: List<Recommendation>?) {
     Column(modifier = Modifier.padding(20.dp)) {
         Text(
             text = "항목",
@@ -176,20 +222,24 @@ fun ProductSection() {
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
-        ProductItem(
-            brand = "닥터지",
-            name = "닥터지 레드블레미쉬 클리어 수딩크림EX 70ml 1+1 기획세트",
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        ProductItem(
-            brand = "셀퓨전씨",
-            name = "셀퓨전씨 포스트 알파 쿨링 마스크 1P (퍼스트 쿨링 마스크)",
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        ProductItem(
-            brand = "아토팜",
-            name = "아토팜 판테놀 로션 180ml",
-        )
+        if (recommendations.isNullOrEmpty()) {
+            Text(
+                text = "추천 제품이 없습니다.",
+                fontFamily = MM_Font,
+                fontSize = 15.sp,
+                color = Color.Gray
+            )
+        } else {
+            recommendations.forEachIndexed { index, recommendation ->
+                ProductItem(
+                    brand = recommendation.brand,
+                    name = recommendation.name,
+                )
+                if (index < recommendations.size - 1) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+            }
+        }
     }
 }
 
